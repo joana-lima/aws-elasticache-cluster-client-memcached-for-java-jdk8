@@ -25,6 +25,7 @@ package net.spy.memcached.protocol;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.Buffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -149,7 +150,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
   protected final synchronized void setBuffer(ByteBuffer to) {
     assert to != null : "Trying to set buffer to null";
     cmd = to;
-    cmd.mark();
+    ((Buffer)cmd).mark();
   }
 
   /**

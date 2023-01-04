@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.Buffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
@@ -116,7 +117,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     rbuf = ByteBuffer.allocateDirect(bufSize);
     wbuf = ByteBuffer.allocateDirect(bufSize);
   
-    getWbuf().clear();
+    ((Buffer)getWbuf()).clear();
     readQ = rq;
     writeQ = wq;
     inputQueue = iq;
@@ -186,8 +187,8 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
       op.cancel();
     }
 
-    getWbuf().clear();
-    getRbuf().clear();
+    ((Buffer)getWbuf()).clear();
+    ((Buffer)getRbuf()).clear();
     toWrite = 0;
   }
 
@@ -214,18 +215,18 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
    */
   public final void fillWriteBuffer(boolean shouldOptimize) throws IOException {
     if (toWrite == 0 && readQ.remainingCapacity() > 0) {
-      getWbuf().clear();
+      ((Buffer)getWbuf()).clear();
       Operation o=getNextWritableOp();
 
       boolean isTlsBufferOverflow = false;
-      while(o != null && toWrite < getWbuf().capacity() && !isTlsBufferOverflow) {
+      while(o != null && toWrite < ((Buffer)getWbuf()).capacity() && !isTlsBufferOverflow) {
         synchronized(o) {
           assert o.getState() == OperationState.WRITING;
 
           ByteBuffer obuf = o.getBuffer();
           if (tlsConnectionHandler == null) {
             assert obuf != null : "Didn't get a write buffer from " + o;
-            int bytesToCopy = Math.min(getWbuf().remaining(), obuf.remaining());
+            int bytesToCopy = Math.min(((Buffer)getWbuf()).remaining(), obuf.remaining());
             byte[] b = new byte[bytesToCopy];
             obuf.get(b);
             getWbuf().put(b);
@@ -253,11 +254,11 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
           }
         }
       }
-      getWbuf().flip();
-      assert toWrite <= getWbuf().capacity() : "toWrite exceeded capacity: "
+      ((Buffer)getWbuf()).flip();
+      assert toWrite <= ((Buffer)getWbuf()).capacity() : "toWrite exceeded capacity: "
           + this;
-      assert toWrite == getWbuf().remaining() : "Expected " + toWrite
-          + " remaining, got " + getWbuf().remaining();
+      assert toWrite == ((Buffer)getWbuf()).remaining() : "Expected " + toWrite
+          + " remaining, got " + ((Buffer)getWbuf()).remaining();
     } else {
       getLogger().debug("Buffer is full, skipping");
     }
